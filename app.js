@@ -508,8 +508,6 @@ function renderDetail() {
   }
   let extra = "";
   if (work.reason) extra += `<div class="rowline"><span>Sabab</span><b>${esc(work.reason)}</b></div>`;
-  if (work.status === "approved") extra += `<p class="note">Tasdiqlandi va KPI ga qo‘shildi. Hozir bu ishni o‘zgartirib bo‘lmaydi.</p>`;
-  if (work.status === "rejected") extra += `<p class="note">Xodim rasmni almashtirib, qayta yubora oladi.</p>`;
   root.innerHTML = `
     <div class="two">
       <section class="card"><div class="photo">${photoBox(work.photo)}</div></section>
@@ -680,7 +678,6 @@ function renderFinance() {
         <div class="rowline"><span>Naqd</span><b>${som(cash)}</b></div>
         <div class="rowline"><span>Karta</span><b>${som(card)}</b></div>
         <div class="rowline"><span>Xarajatlar</span><b>${som(spent)}</b></div>
-        <p class="note">Xodimlar ishining summasi bu yerga aralashmaydi. U KPI da.</p>
       </section>
       <section class="card table-card">
         <div class="card-head">
