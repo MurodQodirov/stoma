@@ -56,6 +56,12 @@ let clients = [
   { id: 1, name: "Smile Dental", phone: "+998 90 100 20 30", person: "Dr. Karimova", address: "Chilonzor, 12-uy" },
   { id: 2, name: "Nur stomatologiya", phone: "+998 91 555 44 33", person: "Dr. Rahimov", address: "Yunusobod, 8-uy" },
   { id: 3, name: "Azimov kabineti", phone: "+998 93 777 12 12", person: "Dr. Azimov", address: "Mirzo Ulug‘bek, 4-uy" },
+  { id: 4, name: "Shifo stomatologiya", phone: "+998 90 212 33 44", person: "Dr. Toshpo‘latova", address: "Sergeli, 3-uy" },
+  { id: 5, name: "Baraka klinikasi", phone: "+998 97 401 55 66", person: "Dr. Yusupov", address: "Yakkasaroy, 19-uy" },
+  { id: 6, name: "Madina klinikasi", phone: "+998 94 700 18 18", person: "Dr. Karimova", address: "Olmazor, 7-uy" },
+  { id: 7, name: "Ziyo kabineti", phone: "+998 93 220 90 11", person: "Dr. Qodirov", address: "Shayxontohur, 2-uy" },
+  { id: 8, name: "Navro‘z stomatologiya", phone: "+998 99 315 40 20", person: "Dr. Abdullayev", address: "Uchtepa, 15-uy" },
+  { id: 9, name: "Dilbar klinikasi", phone: "+998 95 610 77 21", person: "Dr. Ismoilova", address: "Bektemir, 6-uy" },
 ];
 
 let sales = [
@@ -114,7 +120,7 @@ const state = {
   clientQuery: "",
 };
 
-let ids = { work: 8, sale: 104, pay: 3, expense: 3, client: 4, service: 6 };
+let ids = { work: 8, sale: 104, pay: 3, expense: 3, client: 10, service: 6 };
 
 function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, (ch) => ({
