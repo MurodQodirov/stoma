@@ -150,6 +150,7 @@ h1, h2, h3, p { margin: 0; }
   min-height: 92px;
 }
 .box.hot { background: var(--mark); }
+.box.fit { min-height: 0; }
 .box b { display: block; font-size: 15px; font-weight: 400; }
 .box strong { display: block; font-size: 30px; font-weight: 400; line-height: 1.1; margin-top: 4px; }
 .box em { font-style: normal; font-size: 16px; }
@@ -307,6 +308,7 @@ th { font-size: 16px; color: #555; }
 }
 .sum.hot { background: var(--mark); }
 .sum strong { font-size: 28px; font-weight: 400; }
+.stage .sum { width: max-content; max-width: 100%; justify-content: flex-start; gap: 18px; }
 .day { margin: 8px 0 0; font-size: 15px; color: #555; }
 .late { background: var(--mark); padding: 0 4px; }
 .acts {
