@@ -296,6 +296,24 @@ th { font-size: 16px; color: #555; }
 .phone .line { font-size: 16px; }
 .phone .line span:first-child { min-width: 0; }
 .phone .line span:last-child { white-space: nowrap; }
+.sum {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+.sum.hot { background: var(--mark); }
+.sum strong { font-size: 28px; font-weight: 400; }
+.acts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+.acts .btn { text-align: center; padding: 7px 4px; font-size: 16px; }
 .phone h4 { text-align: center; }
 .line .hot { background: var(--mark); padding: 0 4px; }
 .ear {
