@@ -51,6 +51,17 @@ h1, h2, h3, p { margin: 0; }
 .sheet { margin: 28px 0 8px; scroll-margin-top: 72px; }
 .sheet h2 { font-size: 30px; font-weight: 400; margin-bottom: 8px; }
 
+.chapter { margin-top: 8px; }
+.chapter > h2 { font-size: 36px; margin-bottom: 14px; }
+.phones {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.phones .phone { width: 100%; }
+.step { margin: 0 0 8px; font-size: 20px; }
+.desk-list { display: grid; gap: 22px; }
 .pair {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 270px;
@@ -325,8 +336,12 @@ th { font-size: 16px; color: #555; }
 
 @media (max-width: 980px) {
   .cover h1 { font-size: 32px; }
+  .phones { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pair { grid-template-columns: 1fr; }
   .phone { width: min(280px, 100%); }
   .window { overflow-x: auto; }
   .frame { min-width: 820px; }
+}
+@media (max-width: 560px) {
+  .phones { grid-template-columns: 1fr; }
 }
