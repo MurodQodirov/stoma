@@ -54,7 +54,7 @@ let works = [
   { id: 1, person: "murat", service: "Protez", price: 500000, status: "approved", dateKey: "today", photo: true, note: "Yuqori jag‘", reason: "" },
   { id: 2, person: "dilshod", service: "Kron", price: 350000, status: "review", dateKey: "today", photo: true, note: "", reason: "" },
   { id: 3, person: "nilufar", service: "Protez", price: 500000, status: "review", dateKey: "today", photo: true, note: "Rang A2", reason: "" },
-  { id: 4, person: "murat", service: "Ta‘mirlash", price: 120000, status: "draft", dateKey: "today", photo: false, note: "", reason: "" },
+  { id: 4, person: "murat", service: "Ta‘mirlash", price: 120000, status: "draft", dateKey: "today", photo: true, note: "", reason: "" },
   { id: 5, person: "dilshod", service: "Implant qoplama", price: 800000, status: "rejected", dateKey: "yesterday", photo: true, note: "", reason: "Rasm xira. Qayta oling." },
   { id: 6, person: "murat", service: "Kron", price: 350000, status: "approved", dateKey: "yesterday", photo: true, note: "", reason: "" },
   { id: 7, person: "nilufar", service: "Vaqtinchalik protez", price: 180000, status: "approved", dateKey: "week", photo: true, note: "", reason: "" },
@@ -198,12 +198,11 @@ function statusHtml(code) {
   return `<span class="status ${item[1]}">${item[0]}</span>`;
 }
 
-function photoBox(photo, empty) {
+function photoBox(photo) {
   if (typeof photo === "string" && photo.startsWith("data:image/")) {
     return `<img alt="Rasm" src="${photo}">`;
   }
-  if (photo) return "<span>Rasm biriktirilgan</span>";
-  return `<span>${empty || "Rasm yo‘q"}</span>`;
+  return "";
 }
 
 function letter(name) {
@@ -442,7 +441,7 @@ function workRow(work) {
 function checkRow(work) {
   const person = personById(work.person);
   return `<div class="check-row">
-    <div class="thumb">${photoBox(work.photo, "Rasm")}</div>
+    <div class="thumb">${photoBox(work.photo)}</div>
     <div class="check-main">
       <b>${esc(work.service)}</b>
       <span>${esc(person ? person.name : "")} · ${som(work.price)}</span>
@@ -834,7 +833,7 @@ function renderReceipt() {
       <div class="rowline"><span>Mijoz</span><b>${esc(client ? client.name : "—")}</b></div>
       <div class="rowline"><span>Sana</span><b>${dateLabel(sale.dateKey)}</b></div>
       <div class="item">
-        <div class="thumb">${photoBox(sale.photo, "Rasm")}</div>
+        <div class="thumb">${photoBox(sale.photo)}</div>
         <div>
           <b>${esc(sale.item)}</b>
           <span class="note">${sale.qty} × ${som(sale.price)}</span>
@@ -966,7 +965,7 @@ function submitWork(event) {
   const photo = state.photo || (existing && existing.photo);
   if (!photo) {
     error.hidden = false;
-    error.textContent = "Rasm biriktiring. Rasmsiz yuborib bo‘lmaydi.";
+    error.textContent = "Rasm kiriting.";
     return;
   }
   if (existing) {
