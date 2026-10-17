@@ -9,7 +9,7 @@ const META = {
   sale: ["Yangi sotuv", "Naqd, karta yoki qarz"],
   receipt: ["Chek", "Ko‘rib chiqing yoki chop eting"],
   debts: ["Qarzdorlik", "Kimda qancha qarz qolgan"],
-  finance: ["Moliya", "Sotuv, tushum va qarz alohida"],
+  finance: ["Xarajatlar", "Material, ijara va boshqa chiqim"],
   attendance: ["Davomat", "Kelish va ketish vaqti"],
   staff: ["Xodimlar", "Login, parol va rol"],
   services: ["Xizmatlar", "Nom va narx"],
@@ -167,6 +167,7 @@ function currentPersonId() {
 
 function can(need) {
   if (!need) return true;
+  if (need === "staff") return isStaffView();
   if (!isStaffView()) return true;
   if (need === "admin") return false;
   return Boolean(perms[need]);
@@ -298,11 +299,19 @@ function go(page) {
   document.querySelectorAll(".sidebar nav a").forEach((link) => {
     link.classList.toggle("active", link.dataset.go === current);
   });
-  document.getElementById("page-title").textContent = META[page][0];
-  document.getElementById("page-sub").textContent = page === "home" && isStaffView()
-    ? "Sizning ishlaringiz va davomat"
+  const staffTitle = {
+    home: "Mening sahifam",
+    works: "Tarixim",
+    attendance: "Davomatim",
+    kpi: "Mening KPI",
+    "work-new": "Ish qo‘shish",
+  };
+  const title = isStaffView() && staffTitle[page] ? staffTitle[page] : META[page][0];
+  document.getElementById("page-title").textContent = title;
+  document.getElementById("page-sub").textContent = isStaffView() && page === "home"
+    ? "Ish, davomat, KPI va tarix"
     : META[page][1];
-  document.title = META[page][0] + " — Laboratoriya";
+  document.title = title + " — Laboratoriya";
   history.replaceState(null, "", "#" + page);
   closeMenu();
   window.scrollTo(0, 0);
@@ -351,16 +360,14 @@ function renderHome() {
     const row = attendance.find((item) => item.person === id);
     root.innerHTML = `
       <div class="kpi-row">
-        ${kpiCard("Shu oy ishlarim", month[0] + " ta")}
-        ${kpiCard("Shu oy summa", money(month[1]), "so‘m")}
-        ${kpiCard("Bugungi davomat", row ? attendState(row) : "—")}
+        <button type="button" class="kpi" data-go="work-new"><div><span>Ish qo‘shish</span><strong>+</strong></div></button>
+        <button type="button" class="kpi" data-go="attendance"><div><span>Davomatim</span><strong>${row && row.inn ? esc(row.inn) : "—"}</strong></div></button>
+        <button type="button" class="kpi" data-go="kpi"><div><span>KPI</span><strong>${month[0]} ta</strong></div></button>
+        <button type="button" class="kpi" data-go="works"><div><span>Tarixim</span><strong>${mine.length}</strong></div></button>
       </div>
       <section class="card table-card">
-        <div class="card-head">
-          <h2>Mening ishlarim</h2>
-          <button type="button" class="add-btn" data-go="work-new">Ish qo‘shish</button>
-        </div>
-        ${workTable(mine)}
+        <div class="card-head"><h2>So‘nggi ishlar</h2></div>
+        ${workTable(mine.slice(0, 5))}
       </section>`;
     return;
   }
@@ -406,7 +413,7 @@ function workRow(work) {
 }
 
 function renderWorks() {
-  document.getElementById("works-title").textContent = isStaffView() ? "Mening ishlarim" : "Barcha ishlar";
+  document.getElementById("works-title").textContent = isStaffView() ? "Tarixim" : "Barcha ishlar";
   const list = visibleWorks();
   document.getElementById("works-body").innerHTML = list.length
     ? list.map((work) => {
@@ -498,11 +505,11 @@ function renderClient() {
   const ownPays = payments.filter((item) => item.client === client.id);
   const sold = ownSales.reduce((sum, sale) => sum + saleTotal(sale), 0);
   const paid = ownPays.reduce((sum, item) => sum + item.amount, 0);
-  const canSell = can("sales");
+  const debts = ownSales.filter((sale) => saleLeft(sale) > 0);
   root.innerHTML = `
     <div class="kpi-row">
-      ${kpiCard("Sotuv", money(sold), "so‘m")}
-      ${kpiCard("To‘langan", money(paid), "so‘m")}
+      ${kpiCard("Kirim", money(paid), "so‘m")}
+      ${kpiCard("Chiqim", money(sold), "so‘m")}
       ${kpiCard("Qarz", money(clientDebt(client.id)), "so‘m")}
     </div>
     <section class="card">
@@ -512,14 +519,29 @@ function renderClient() {
           <p class="note">${esc(client.person || "")} · ${esc(client.phone)} · ${esc(client.address || "")}</p>
         </div>
         <div class="actions">
-          ${canSell ? `<button type="button" class="add-btn" data-act="new-sale" data-id="${client.id}">Sotuv</button>` : ""}
-          ${clientDebt(client.id) ? `<button type="button" class="ghost" data-act="open-pay" data-id="${client.id}">To‘lov</button>` : ""}
+          <button type="button" class="add-btn" data-act="open-pay" data-id="${client.id}">Kirim</button>
+          <button type="button" class="ghost" data-act="new-sale" data-id="${client.id}">Chiqim</button>
+          <button type="button" class="ghost" data-act="send-msg" data-kind="sms" data-id="${client.id}">SMS</button>
+          <button type="button" class="ghost" data-act="send-msg" data-kind="telegram" data-id="${client.id}">Telegram</button>
         </div>
       </div>
     </section>
-    <div class="split">
+    <div class="stack">
       <section class="card table-card">
-        <div class="card-head"><h2>Sotuvlar</h2></div>
+        <div class="card-head"><h2>Qarzlar</h2></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Nima</th><th>Qoldiq</th><th></th></tr></thead>
+          <tbody>
+            ${debts.length ? debts.map((sale) => `<tr>
+              <td>${esc(sale.item)} × ${sale.qty}<small class="note">${dateLabel(sale.dateKey)}</small></td>
+              <td class="num">${som(saleLeft(sale))}</td>
+              <td><button type="button" class="link" data-act="open-pay" data-id="${client.id}">Kirim</button></td>
+            </tr>`).join("") : `<tr><td class="empty" colspan="3">Qarz yo‘q.</td></tr>`}
+          </tbody>
+        </table></div>
+      </section>
+      <section class="card table-card">
+        <div class="card-head"><h2>Chiqimlar</h2></div>
         <div class="table-wrap"><table>
           <thead><tr><th>Nima</th><th>Jami</th><th>Qoldiq</th><th></th></tr></thead>
           <tbody>
@@ -533,7 +555,7 @@ function renderClient() {
         </table></div>
       </section>
       <section class="card table-card">
-        <div class="card-head"><h2>To‘lovlar</h2></div>
+        <div class="card-head"><h2>Kirimlar</h2></div>
         <div class="table-wrap"><table>
           <thead><tr><th>Sana</th><th>Usul</th><th>Summa</th></tr></thead>
           <tbody>
@@ -578,31 +600,28 @@ function renderFinance() {
   const card = payments.filter((item) => item.method === "Karta").reduce((sum, item) => sum + item.amount, 0);
   const spent = expenses.reduce((sum, item) => sum + item.amount, 0);
   document.getElementById("finance-root").innerHTML = `
+    <section class="card table-card">
+      <div class="card-head">
+        <h2>Xarajatlar</h2>
+        <button type="button" class="add-btn" data-act="open-expense">Xarajat qo‘shish</button>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Nima</th><th>Sana</th><th>Summa</th></tr></thead>
+        <tbody>
+          ${expenses.map((item) => `<tr><td>${esc(item.name)}</td><td>${dateLabel(item.dateKey)}</td><td class="num">${som(item.amount)}</td></tr>`).join("")}
+        </tbody>
+      </table></div>
+    </section>
     <div class="kpi-row">
-      ${kpiCard("Sotuv summasi", money(sold), "so‘m")}
+      ${kpiCard("Xarajat", money(spent), "so‘m")}
       ${kpiCard("Tushum", money(income), "so‘m")}
-      ${kpiCard("Qarzdorlik", money(debt), "so‘m")}
+      ${kpiCard("Qarz", money(debt), "so‘m")}
     </div>
-    <div class="split">
-      <section class="card">
-        <h2>To‘lov usuli</h2>
-        <div class="rowline"><span>Naqd</span><b>${som(cash)}</b></div>
-        <div class="rowline"><span>Karta</span><b>${som(card)}</b></div>
-        <div class="rowline"><span>Xarajatlar</span><b>${som(spent)}</b></div>
-      </section>
-      <section class="card table-card">
-        <div class="card-head">
-          <h2>Xarajatlar</h2>
-          <button type="button" class="add-btn" data-act="open-expense">Xarajat</button>
-        </div>
-        <div class="table-wrap"><table>
-          <thead><tr><th>Nima</th><th>Sana</th><th>Summa</th></tr></thead>
-          <tbody>
-            ${expenses.map((item) => `<tr><td>${esc(item.name)}</td><td>${dateLabel(item.dateKey)}</td><td class="num">${som(item.amount)}</td></tr>`).join("")}
-          </tbody>
-        </table></div>
-      </section>
-    </div>`;
+    <section class="card">
+      <h2>Pul qayerda</h2>
+      <div class="rowline"><span>Naqd</span><b>${som(cash)}</b></div>
+      <div class="rowline"><span>Karta</span><b>${som(card)}</b></div>
+    </section>`;
 }
 
 function attendState(row) {
@@ -622,7 +641,13 @@ function renderAttendance() {
     .map(([key, label]) => `<button type="button" class="chip${state.attendPeriod === key ? " active" : ""}" data-act="filter-attend" data-val="${key}">${label}</button>`)
     .join("");
   const list = attendance.filter((row) => !isStaffView() || row.person === currentPersonId());
-  const headBtn = isStaffView() ? "" : `<button type="button" class="add-btn" data-act="open-attend">Davomat yozish</button>`;
+  const mine = list[0];
+  let headBtn = `<button type="button" class="add-btn" data-act="open-attend">Yozish</button>`;
+  if (isStaffView() && state.attendPeriod === "day") {
+    if (!mine || !mine.inn) headBtn = `<button type="button" class="add-btn" data-act="mark-in">Keldim</button>`;
+    else if (!mine.out) headBtn = `<button type="button" class="add-btn" data-act="mark-out">Ketdim</button>`;
+    else headBtn = "";
+  }
   let body;
   if (state.attendPeriod === "month") {
     body = `<table><thead><tr><th>Xodim</th><th>Kelgan</th><th>Kechikkan</th><th>Kelmagan</th></tr></thead><tbody>
@@ -645,7 +670,6 @@ function renderAttendance() {
     <section class="card table-card">
       <div class="card-head"><h2>${state.attendPeriod === "month" ? "Oylik davomat" : "Bugungi davomat"}</h2>${headBtn}</div>
       <div class="table-wrap">${body}</div>
-      ${state.attendPeriod === "month" ? `<p class="note pad-note">Oylik kunlar misol uchun qo‘yilgan.</p>` : ""}
     </section>`;
 }
 
@@ -1024,6 +1048,12 @@ document.getElementById("sale-photo").addEventListener("change", (event) => {
 });
 
 document.getElementById("form-pay").addEventListener("submit", submitPay);
+document.getElementById("form-msg").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const kind = document.getElementById("msg-title").textContent;
+  closeModals();
+  flash(kind + " yuborildi");
+});
 document.getElementById("form-expense").addEventListener("submit", (event) => {
   event.preventDefault();
   expenses.unshift({
@@ -1163,8 +1193,36 @@ document.addEventListener("click", (event) => {
       renderReceipt();
       go("receipt");
     }
+    if (act.dataset.act === "mark-in" || act.dataset.act === "mark-out") {
+      const person = currentPersonId();
+      let row = attendance.find((item) => item.person === person);
+      if (!row) {
+        row = { person, inn: "", out: "" };
+        attendance.push(row);
+      }
+      const now = new Date();
+      const stamp = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+      if (act.dataset.act === "mark-in") row.inn = stamp;
+      else row.out = stamp;
+      flash(act.dataset.act === "mark-in" ? "Kelganingiz yozildi" : "Ketganingiz yozildi");
+      renderAll();
+    }
+    if (act.dataset.act === "send-msg") {
+      const client = clientById(id);
+      const kind = act.dataset.kind === "telegram" ? "Telegram" : "SMS";
+      document.getElementById("msg-title").textContent = kind;
+      document.getElementById("msg-body").textContent = client
+        ? `${client.name}, qarzingiz ${som(clientDebt(client.id))}.`
+        : "";
+      document.getElementById("msg-send").textContent = kind + " yuborish";
+      openModal("modal-msg");
+    }
     if (act.dataset.act === "open-pay") {
       const clientId = Number(id);
+      if (!sales.some((sale) => sale.client === clientId && saleLeft(sale) > 0)) {
+        flash("Qarz yo‘q", false);
+        return;
+      }
       const options = sales
         .filter((sale) => sale.client === clientId && saleLeft(sale) > 0)
         .map((sale) => `<option value="${sale.id}">${esc(sale.item)} · ${som(saleLeft(sale))}</option>`)

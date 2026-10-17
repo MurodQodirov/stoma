@@ -138,6 +138,15 @@ button.logout {
 .date-chip svg { width: 18px; height: 18px; }
 
 .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+.kpi-row:has(> .kpi:nth-child(4)) { grid-template-columns: repeat(4, 1fr); }
+button.kpi {
+  width: 100%;
+  border: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
 .kpi-row.four { grid-template-columns: repeat(4, 1fr); }
 .kpi {
   background: #fff;
@@ -247,7 +256,7 @@ tr[data-go]:hover td { background: #fafbfd; }
 .empty { color: var(--muted); padding: 24px 16px; }
 .num { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
 .dim { opacity: 0.45; }
-.actions { display: flex; gap: 14px; align-items: center; justify-content: flex-end; }
+.actions { display: flex; gap: 8px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
 .link, .danger {
   background: none;
   border: 0;
