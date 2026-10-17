@@ -54,11 +54,6 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
             Ishlar
           </a>
-          <a href="#approve" data-go="approve" data-need="admin">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-            Tasdiqlash
-            <span class="badge" id="approve-badge" hidden>0</span>
-          </a>
           <a href="#kpi" data-go="kpi">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V10M10 19V5M16 19v-7M3 19h18"/></svg>
             KPI
@@ -139,7 +134,6 @@
       </section>
 
       <section class="page" data-page="works" hidden>
-        <div class="filters" id="work-filters"></div>
         <section class="card table-card">
           <div class="card-head">
             <h2 id="works-title">Ishlar</h2>
@@ -154,7 +148,7 @@
           <div class="table-wrap">
             <table>
               <thead>
-                <tr><th>Xodim</th><th>Ish</th><th>Narx</th><th>Sana</th><th>Holat</th><th></th></tr>
+                <tr><th>Xodim</th><th>Ish</th><th>Narx</th><th>Sana</th><th></th></tr>
               </thead>
               <tbody id="works-body"></tbody>
             </table>
@@ -200,7 +194,7 @@
             </div>
             <p id="work-error" class="flash error" hidden></p>
             <div class="form-actions">
-              <button type="submit" id="work-submit">Tasdiqlashga yuborish</button>
+              <button type="submit" id="work-submit">Saqlash</button>
             </div>
           </form>
         </section>
@@ -208,10 +202,6 @@
 
       <section class="page" data-page="work" hidden>
         <div id="work-detail"></div>
-      </section>
-
-      <section class="page" data-page="approve" hidden>
-        <section class="card table-card" id="approve-list"></section>
       </section>
 
       <section class="page" data-page="kpi" hidden>
@@ -383,23 +373,6 @@
         </section>
       </section>
     </main>
-
-    <div class="modal" id="modal-reject">
-      <div class="modal-card">
-        <div class="modal-head">
-          <h3 class="modal-title">Rad etish</h3>
-          <button type="button" class="modal-x" data-act="close" aria-label="Yopish">&times;</button>
-        </div>
-        <form id="form-reject" class="form">
-          <label for="reject-reason">Sabab</label>
-          <textarea id="reject-reason" required placeholder="Masalan: rasm xira, qayta oling"></textarea>
-          <div class="modal-actions">
-            <button type="button" class="ghost" data-act="close">Bekor</button>
-            <button type="submit">Rad etish</button>
-          </div>
-        </form>
-      </div>
-    </div>
 
     <div class="modal" id="modal-pay">
       <div class="modal-card">

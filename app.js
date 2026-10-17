@@ -1,17 +1,9 @@
-const STATUS = {
-  draft: ["Qoralama", "gray"],
-  review: ["Tekshirilmoqda", "blue"],
-  approved: ["Tasdiqlangan", "green"],
-  rejected: ["Rad etilgan", "pink"],
-};
-
 const META = {
-  home: ["Bosh sahifa", "Bugungi ishlar, tasdiq va pul"],
-  works: ["Ishlar", "Bajarilgan ish va uning holati"],
-  "work-new": ["Yangi ish", "Turni tanlang, rasm qo‘ying, yuboring"],
-  work: ["Ish", "Rasm, narx va holat"],
-  approve: ["Tasdiqlash", "Rasm va narxni tekshiring"],
-  kpi: ["KPI", "Tasdiqlangan ishlar soni va summasi"],
+  home: ["Bosh sahifa", "Bugungi ishlar va pul"],
+  works: ["Ishlar", "Bajarilgan ishlar"],
+  "work-new": ["Yangi ish", "Turni tanlang, rasm qo‘ying, saqlang"],
+  work: ["Ish", "Rasm va narx"],
+  kpi: ["KPI", "Ishlar soni va summasi"],
   clients: ["Mijozlar", "Klinikalar, to‘lov va qarz"],
   client: ["Mijoz", "Sotuvlar va to‘lovlar"],
   sale: ["Yangi sotuv", "Naqd, karta yoki qarz"],
@@ -51,13 +43,13 @@ let services = [
 ];
 
 let works = [
-  { id: 1, person: "murat", service: "Protez", price: 500000, status: "approved", dateKey: "today", photo: true, note: "Yuqori jag‘", reason: "" },
-  { id: 2, person: "dilshod", service: "Kron", price: 350000, status: "review", dateKey: "today", photo: true, note: "", reason: "" },
-  { id: 3, person: "nilufar", service: "Protez", price: 500000, status: "review", dateKey: "today", photo: true, note: "Rang A2", reason: "" },
-  { id: 4, person: "murat", service: "Ta‘mirlash", price: 120000, status: "draft", dateKey: "today", photo: true, note: "", reason: "" },
-  { id: 5, person: "dilshod", service: "Implant qoplama", price: 800000, status: "rejected", dateKey: "yesterday", photo: true, note: "", reason: "Rasm xira. Qayta oling." },
-  { id: 6, person: "murat", service: "Kron", price: 350000, status: "approved", dateKey: "yesterday", photo: true, note: "", reason: "" },
-  { id: 7, person: "nilufar", service: "Vaqtinchalik protez", price: 180000, status: "approved", dateKey: "week", photo: true, note: "", reason: "" },
+  { id: 1, person: "murat", service: "Protez", price: 500000, dateKey: "today", photo: true, note: "Yuqori jag‘" },
+  { id: 2, person: "dilshod", service: "Kron", price: 350000, dateKey: "today", photo: true, note: "" },
+  { id: 3, person: "nilufar", service: "Protez", price: 500000, dateKey: "today", photo: true, note: "Rang A2" },
+  { id: 4, person: "murat", service: "Ta‘mirlash", price: 120000, dateKey: "today", photo: true, note: "" },
+  { id: 5, person: "dilshod", service: "Implant qoplama", price: 800000, dateKey: "yesterday", photo: true, note: "" },
+  { id: 6, person: "murat", service: "Kron", price: 350000, dateKey: "yesterday", photo: true, note: "" },
+  { id: 7, person: "nilufar", service: "Vaqtinchalik protez", price: 180000, dateKey: "week", photo: true, note: "" },
 ];
 
 let clients = [
@@ -111,7 +103,6 @@ const state = {
   editId: null,
   photo: "",
   salePhoto: "",
-  rejectId: null,
   staffId: null,
   serviceId: null,
   workFilter: "all",
@@ -193,11 +184,6 @@ function clientDebt(id) {
   return sales.filter((sale) => sale.client === id).reduce((sum, sale) => sum + saleLeft(sale), 0);
 }
 
-function statusHtml(code) {
-  const item = STATUS[code] || ["—", "gray"];
-  return `<span class="status ${item[1]}">${item[0]}</span>`;
-}
-
 function photoBox(photo) {
   if (typeof photo === "string" && photo.startsWith("data:image/")) {
     return `<img alt="Rasm" src="${photo}">`;
@@ -237,7 +223,6 @@ function visibleWorks() {
   const query = state.workQuery.trim().toLowerCase();
   return works.filter((work) => {
     if (isStaffView() && work.person !== currentPersonId()) return false;
-    if (state.workFilter !== "all" && work.status !== state.workFilter) return false;
     if (!query) return true;
     const person = personById(work.person);
     return `${person ? person.name : ""} ${work.service} ${work.note}`.toLowerCase().includes(query);
@@ -299,10 +284,6 @@ function applyChrome() {
     const label = nav.previousElementSibling;
     if (label && label.classList.contains("nav-label")) label.hidden = !any;
   });
-  const pending = works.filter((work) => work.status === "review").length;
-  const badge = document.getElementById("approve-badge");
-  badge.hidden = pending === 0;
-  badge.textContent = String(pending);
   const brand = document.getElementById("set-name").value.trim() || "Laboratoriya";
   document.getElementById("brand-name").textContent = brand;
 }
@@ -329,7 +310,6 @@ function go(page) {
 
 function pageAllowed(page) {
   const need = {
-    approve: "admin",
     staff: "admin",
     services: "admin",
     roles: "admin",
@@ -349,7 +329,6 @@ function renderAll() {
   renderHome();
   renderWorks();
   renderDetail();
-  renderApprove();
   renderKpi();
   renderClients();
   renderClient();
@@ -386,33 +365,22 @@ function renderHome() {
     return;
   }
 
-  const todayWorks = works.filter((work) => work.dateKey === "today" && work.status !== "draft");
-  const pending = works.filter((work) => work.status === "review");
+  const todayWorks = works.filter((work) => work.dateKey === "today");
   const income = payments.filter((item) => item.dateKey === "today").reduce((sum, item) => sum + item.amount, 0);
   const debt = sales.reduce((sum, sale) => sum + saleLeft(sale), 0);
   root.innerHTML = `
-    <div class="kpi-row four">
+    <div class="kpi-row">
       ${kpiCard("Bugungi ishlar", String(todayWorks.length))}
-      ${kpiCard("Tasdiq kutilmoqda", String(pending.length))}
       ${kpiCard("Bugungi tushum", money(income), "so‘m")}
       ${kpiCard("Jami qarz", money(debt), "so‘m")}
     </div>
-    <div class="split">
-      <section class="card table-card">
-        <div class="card-head">
-          <h2>Bugungi ishlar</h2>
-          <button type="button" class="ghost" data-go="works">Hammasi</button>
-        </div>
-        ${workTable(todayWorks)}
-      </section>
-      <section class="card table-card">
-        <div class="card-head">
-          <h2>Tasdiq kutilmoqda</h2>
-          <button type="button" class="ghost" data-go="approve">Hammasi</button>
-        </div>
-        ${pending.length ? pending.slice(0, 4).map(checkRow).join("") : `<p class="empty">Hozircha yo‘q.</p>`}
-      </section>
-    </div>`;
+    <section class="card table-card">
+      <div class="card-head">
+        <h2>Bugungi ishlar</h2>
+        <button type="button" class="ghost" data-go="works">Hammasi</button>
+      </div>
+      ${workTable(todayWorks)}
+    </section>`;
 }
 
 function kpiCard(label, value, unit) {
@@ -422,7 +390,7 @@ function kpiCard(label, value, unit) {
 function workTable(list) {
   if (!list.length) return `<p class="empty">Hozircha ish yo‘q.</p>`;
   return `<div class="table-wrap"><table>
-    <thead><tr><th>Xodim</th><th>Ish</th><th>Narx</th><th>Holat</th><th></th></tr></thead>
+    <thead><tr><th>Xodim</th><th>Ish</th><th>Narx</th><th></th></tr></thead>
     <tbody>${list.map((work) => workRow(work, true)).join("")}</tbody>
   </table></div>`;
 }
@@ -433,45 +401,12 @@ function workRow(work) {
     <td>${esc(person ? person.name : "—")}</td>
     <td><b>${esc(work.service)}</b>${work.note ? `<small class="note">${esc(work.note)}</small>` : ""}</td>
     <td class="num">${som(work.price)}</td>
-    <td>${statusHtml(work.status)}</td>
     <td><button type="button" class="link" data-go="work" data-id="${work.id}">Ochish</button></td>
   </tr>`;
 }
 
-function checkRow(work) {
-  const person = personById(work.person);
-  return `<div class="check-row">
-    <div class="thumb">${photoBox(work.photo)}</div>
-    <div class="check-main">
-      <b>${esc(work.service)}</b>
-      <span>${esc(person ? person.name : "")} · ${som(work.price)}</span>
-    </div>
-    <div class="actions">
-      <button type="button" class="link" data-go="work" data-id="${work.id}">Ko‘rish</button>
-      <button type="button" class="add-btn" data-act="approve" data-id="${work.id}">Tasdiqlash</button>
-      <button type="button" class="danger" data-act="reject" data-id="${work.id}">Rad etish</button>
-    </div>
-  </div>`;
-}
-
 function renderWorks() {
   document.getElementById("works-title").textContent = isStaffView() ? "Mening ishlarim" : "Barcha ishlar";
-  const counts = { all: 0, draft: 0, review: 0, approved: 0, rejected: 0 };
-  works.forEach((work) => {
-    if (isStaffView() && work.person !== currentPersonId()) return;
-    counts.all += 1;
-    counts[work.status] += 1;
-  });
-  const filters = [
-    ["all", "Hammasi"],
-    ["draft", "Qoralama"],
-    ["review", "Tekshirilmoqda"],
-    ["approved", "Tasdiqlangan"],
-    ["rejected", "Rad etilgan"],
-  ];
-  document.getElementById("work-filters").innerHTML = filters
-    .map(([key, label]) => `<button type="button" class="chip${state.workFilter === key ? " active" : ""}" data-act="filter-work" data-val="${key}">${label} <span>${counts[key]}</span></button>`)
-    .join("");
   const list = visibleWorks();
   document.getElementById("works-body").innerHTML = list.length
     ? list.map((work) => {
@@ -481,11 +416,10 @@ function renderWorks() {
         <td>${esc(work.service)}</td>
         <td class="num">${som(work.price)}</td>
         <td>${dateLabel(work.dateKey)}</td>
-        <td>${statusHtml(work.status)}</td>
         <td><button type="button" class="link" data-go="work" data-id="${work.id}">Ochish</button></td>
       </tr>`;
     }).join("")
-    : `<tr><td class="empty" colspan="6">Bunday ish yo‘q.</td></tr>`;
+    : `<tr><td class="empty" colspan="5">Bunday ish yo‘q.</td></tr>`;
 }
 
 function renderDetail() {
@@ -496,17 +430,6 @@ function renderDetail() {
     return;
   }
   const person = personById(work.person);
-  let actions = "";
-  if (work.status === "review" && !isStaffView()) {
-    actions = `<div class="form-actions">
-      <button type="button" class="add-btn" data-act="approve" data-id="${work.id}">Tasdiqlash</button>
-      <button type="button" class="danger" data-act="reject" data-id="${work.id}">Rad etish</button>
-    </div>`;
-  } else if (work.status === "draft" || work.status === "rejected") {
-    actions = `<div class="form-actions"><button type="button" class="add-btn" data-act="edit-work" data-id="${work.id}">${work.status === "draft" ? "Davom etish" : "Qayta yuborish"}</button></div>`;
-  }
-  let extra = "";
-  if (work.reason) extra += `<div class="rowline"><span>Sabab</span><b>${esc(work.reason)}</b></div>`;
   root.innerHTML = `
     <div class="two">
       <section class="card"><div class="photo">${photoBox(work.photo)}</div></section>
@@ -515,20 +438,9 @@ function renderDetail() {
         <div class="rowline"><span>Xodim</span><b>${esc(person ? person.name : "—")}</b></div>
         <div class="rowline"><span>Narx</span><b>${som(work.price)}</b></div>
         <div class="rowline"><span>Sana</span><b>${dateLabel(work.dateKey)}</b></div>
-        <div class="rowline"><span>Holat</span>${statusHtml(work.status)}</div>
         ${work.note ? `<div class="rowline"><span>Izoh</span><b>${esc(work.note)}</b></div>` : ""}
-        ${extra}
-        ${actions}
       </section>
     </div>`;
-}
-
-function renderApprove() {
-  const list = works.filter((work) => work.status === "review");
-  const root = document.getElementById("approve-list");
-  root.innerHTML = list.length
-    ? list.map(checkRow).join("")
-    : `<p class="empty">Tekshiriladigan ish yo‘q.</p>`;
 }
 
 function renderKpi() {
@@ -549,7 +461,7 @@ function renderKpi() {
   document.getElementById("kpi-root").innerHTML = `
     <section class="card table-card">
       <div class="table-wrap"><table>
-        <thead><tr><th>Xodim</th><th>Tasdiqlangan ishlar</th><th>Jami summa</th></tr></thead>
+        <thead><tr><th>Xodim</th><th>Ishlar</th><th>Jami summa</th></tr></thead>
         <tbody>
           ${rows.join("")}
           ${peopleList.length > 1 ? `<tr><td><b>Jami</b></td><td class="num">${total[0]} ta</td><td class="num">${som(total[1])}</td></tr>` : ""}
@@ -769,7 +681,6 @@ function renderRoles() {
     ["Ish kiritish", "Ha", "ha"],
     ["Barcha ishlar", "Ha", "yoq"],
     ["O‘z ishlari", "Ha", "ha"],
-    ["Tasdiqlash", "Ha", "yoq"],
     ["Barcha KPI", "Ha", "yoq"],
     ["O‘z KPI", "Ha", "ha"],
     ["Mijozlar", "Ha", "clients"],
@@ -803,7 +714,7 @@ function renderReport() {
   const spent = expenses.filter((item) => inPeriod(item.dateKey, period)).reduce((sum, item) => sum + item.amount, 0);
   const debt = periodSales.reduce((sum, sale) => sum + saleLeft(sale), 0);
   const lines = [
-    ["Tasdiqlangan ishlar", workCount + " ta"],
+    ["Ishlar", workCount + " ta"],
     ["Ishlar summasi", som(workSum)],
     ["Sotuv", som(sold)],
     ["Tushum", som(income)],
@@ -883,7 +794,7 @@ function resetWorkForm() {
   document.getElementById("work-preview").innerHTML = "";
   document.getElementById("work-file-label").textContent = "Rasm olish yoki yuklash";
   document.getElementById("work-error").hidden = true;
-  document.getElementById("work-submit").textContent = "Tasdiqlashga yuborish";
+  document.getElementById("work-submit").textContent = "Saqlash";
   fillForms();
 }
 
@@ -912,89 +823,36 @@ function addKpi(person, price) {
   });
 }
 
-function approveWork(id) {
-  const work = works.find((item) => item.id === Number(id));
-  if (!work || work.status === "approved") return;
-  work.status = "approved";
-  work.reason = "";
-  addKpi(work.person, work.price);
-  state.workId = work.id;
-  flash("Ish tasdiqlandi");
-  renderAll();
-}
-
-function openReject(id) {
-  state.rejectId = Number(id);
-  document.getElementById("reject-reason").value = "";
-  openModal("modal-reject");
-}
-
-function openComposer(id) {
-  const work = works.find((item) => item.id === Number(id));
-  resetWorkForm();
-  if (!work) {
-    go("work-new");
-    return;
-  }
-  state.editId = work.id;
-  state.photo = typeof work.photo === "string" ? work.photo : "";
-  const service = services.find((item) => item.name === work.service);
-  document.getElementById("work-service").value = service ? String(service.id) : "";
-  document.getElementById("work-person").value = work.person;
-  document.getElementById("work-note").value = work.note || "";
-  document.getElementById("work-submit").textContent = work.status === "rejected" ? "Qayta yuborish" : "Tasdiqlashga yuborish";
-  if (work.photo && !state.photo) {
-    showWorkPreview("keep");
-    document.getElementById("work-file-label").textContent = "Rasm bor. Istasangiz almashtiring";
-  } else showWorkPreview(state.photo);
-  updateWorkPrice();
-  go("work-new");
-}
-
 function submitWork(event) {
   event.preventDefault();
   const error = document.getElementById("work-error");
   const service = selectedService(document.getElementById("work-service").value);
-  const existing = works.find((item) => item.id === state.editId);
   const personId = isStaffView() ? currentPersonId() : document.getElementById("work-person").value;
   if (!service) {
     error.hidden = false;
     error.textContent = "Ish turini tanlang.";
     return;
   }
-  const photo = state.photo || (existing && existing.photo);
-  if (!photo) {
+  if (!state.photo) {
     error.hidden = false;
     error.textContent = "Rasm kiriting.";
     return;
   }
-  if (existing) {
-    existing.service = service.name;
-    existing.price = service.price;
-    existing.person = personId;
-    existing.note = document.getElementById("work-note").value.trim();
-    existing.photo = state.photo || existing.photo;
-    existing.status = "review";
-    existing.reason = "";
-    state.workId = existing.id;
-  } else {
-    const work = {
-      id: ids.work++,
-      person: personId,
-      service: service.name,
-      price: service.price,
-      status: "review",
-      dateKey: "today",
-      photo: state.photo,
-      note: document.getElementById("work-note").value.trim(),
-      reason: "",
-    };
-    works.unshift(work);
-    state.workId = work.id;
-  }
+  const work = {
+    id: ids.work++,
+    person: personId,
+    service: service.name,
+    price: service.price,
+    dateKey: "today",
+    photo: state.photo,
+    note: document.getElementById("work-note").value.trim(),
+  };
+  works.unshift(work);
+  addKpi(personId, service.price);
+  state.workId = work.id;
   error.hidden = true;
   resetWorkForm();
-  flash("Ish tasdiqlashga yuborildi");
+  flash("Ish saqlandi");
   go("works");
   renderAll();
 }
@@ -1165,18 +1023,6 @@ document.getElementById("sale-photo").addEventListener("change", (event) => {
   });
 });
 
-document.getElementById("form-reject").addEventListener("submit", (event) => {
-  event.preventDefault();
-  const work = works.find((item) => item.id === state.rejectId);
-  const reason = document.getElementById("reject-reason").value.trim();
-  if (!work || !reason) return;
-  work.status = "rejected";
-  work.reason = reason;
-  closeModals();
-  flash("Ish rad etildi");
-  renderAll();
-});
-
 document.getElementById("form-pay").addEventListener("submit", submitPay);
 document.getElementById("form-expense").addEventListener("submit", (event) => {
   event.preventDefault();
@@ -1289,14 +1135,7 @@ document.addEventListener("click", (event) => {
   const act = event.target.closest("[data-act]");
   if (act) {
     const id = act.dataset.id;
-    if (act.dataset.act === "approve") approveWork(id);
-    if (act.dataset.act === "reject") openReject(id);
-    if (act.dataset.act === "edit-work") openComposer(id);
     if (act.dataset.act === "close") closeModals();
-    if (act.dataset.act === "filter-work") {
-      state.workFilter = act.dataset.val;
-      renderWorks();
-    }
     if (act.dataset.act === "filter-kpi") {
       state.kpiPeriod = act.dataset.val;
       renderKpi();
