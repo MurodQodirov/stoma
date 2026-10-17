@@ -54,12 +54,12 @@ h1, h2, h3, p { margin: 0; }
 .chapter { margin-top: 8px; }
 .chapter > h2 { font-size: 36px; margin-bottom: 14px; }
 .phones {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px 22px;
+  align-items: flex-start;
 }
-.phones .phone { width: 100%; }
+.phones > div { width: 280px; max-width: 100%; }
 .step { margin: 0 0 8px; font-size: 20px; }
 .desk-list { display: grid; gap: 22px; }
 .pair {
@@ -250,6 +250,8 @@ th { font-size: 16px; color: #555; }
 .center { text-align: center; }
 
 .phone {
+  width: 280px;
+  max-width: 100%;
   background: #fff;
   border: 2px solid var(--line);
   border-radius: 28px;
@@ -292,6 +294,8 @@ th { font-size: 16px; color: #555; }
 .phone .row.three { grid-template-columns: 1fr; }
 .phone .pic.big { height: 110px; }
 .phone .line { font-size: 16px; }
+.phone .line span:first-child { min-width: 0; }
+.phone .line span:last-child { white-space: nowrap; }
 .phone h4 { text-align: center; }
 .line .hot { background: var(--mark); padding: 0 4px; }
 .ear {
@@ -336,12 +340,7 @@ th { font-size: 16px; color: #555; }
 
 @media (max-width: 980px) {
   .cover h1 { font-size: 32px; }
-  .phones { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pair { grid-template-columns: 1fr; }
-  .phone { width: min(280px, 100%); }
   .window { overflow-x: auto; }
   .frame { min-width: 820px; }
-}
-@media (max-width: 560px) {
-  .phones { grid-template-columns: 1fr; }
 }
